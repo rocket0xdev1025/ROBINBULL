@@ -39,7 +39,87 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     html { scroll-behavior: smooth; }
-    body { font-family: 'Rajdhani', system-ui, sans-serif; }
+    body {
+      font-family: 'Rajdhani', system-ui, sans-serif;
+      cursor: none;
+    }
+
+    /* Custom arrow cursor — hide system cursor, show arrow image */
+    a, button, input, textarea, select, label, [role="button"],
+    .btn-buy, .nav-link, .mobile-link, .social-card, .step-card {
+      cursor: none !important;
+    }
+
+    #custom-cursor {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 48px;
+      height: 48px;
+      pointer-events: none;
+      z-index: 99999;
+      will-change: transform;
+      transition: width 0.15s ease, height 0.15s ease, filter 0.15s ease, opacity 0.15s ease;
+      filter: drop-shadow(0 0 6px rgba(0, 200, 5, 0.55));
+      opacity: 1;
+    }
+    #custom-cursor img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      user-select: none;
+      -webkit-user-drag: none;
+      transition: transform 0.12s ease;
+      transform-origin: 8px 4px;
+    }
+    #custom-cursor.clicking img {
+      transform: scale(0.82);
+    }
+    #custom-cursor.clicking {
+      filter: drop-shadow(0 0 10px rgba(245, 197, 24, 0.8));
+    }
+    #custom-cursor.hovering {
+      width: 56px;
+      height: 56px;
+      filter: drop-shadow(0 0 12px rgba(0, 200, 5, 0.85)) drop-shadow(0 0 4px rgba(245, 197, 24, 0.5));
+    }
+    #custom-cursor.hidden-cursor {
+      opacity: 0;
+    }
+
+    /* Soft trail ring behind arrow */
+    #cursor-ring {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 28px;
+      height: 28px;
+      margin: -14px 0 0 -14px;
+      border: 1.5px solid rgba(0, 200, 5, 0.45);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 99998;
+      transition: width 0.2s ease, height 0.2s ease, margin 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+      box-shadow: 0 0 12px rgba(0, 200, 5, 0.25);
+      will-change: transform;
+    }
+    #cursor-ring.hovering {
+      width: 44px;
+      height: 44px;
+      margin: -22px 0 0 -22px;
+      border-color: rgba(245, 197, 24, 0.55);
+      box-shadow: 0 0 18px rgba(245, 197, 24, 0.3);
+    }
+
+    /* Fallback CSS cursor if JS fails / touch devices keep default via media query */
+    @media (hover: none), (pointer: coarse) {
+      body,
+      a, button, input, textarea, select, label, [role="button"],
+      .btn-buy, .nav-link, .mobile-link, .social-card, .step-card {
+        cursor: auto !important;
+      }
+      #custom-cursor, #cursor-ring { display: none !important; }
+    }
 
     /* ── Background ── */
     .video-bg {
@@ -609,6 +689,12 @@
 </head>
 <body class="bg-robin-dark text-white overflow-x-hidden">
 
+  <!-- Custom arrow mouse cursor -->
+  <div id="custom-cursor" aria-hidden="true">
+    <img src="arrow.svg" alt="" draggable="false" />
+  </div>
+  <div id="cursor-ring" aria-hidden="true"></div>
+
   <!-- Background video -->
   <div class="video-bg" aria-hidden="true">
     <video autoplay muted loop playsinline poster="banner.png">
@@ -653,7 +739,7 @@
         <a href="https://x.com/RobinhoodBullX" target="_blank" rel="noopener noreferrer" class="hidden sm:block p-1.5 rounded-full hover:bg-robin-green/10 transition" title="X / Twitter">
           <img src="x.png" alt="X / Twitter" class="w-8 h-8 rounded-full object-cover ring-1 ring-white/20 hover:ring-white/60 transition" />
         </a>
-        <a href="https://swap.pump.fun/?input=So11111111111111111111111111111111111111112&output=TBA" target="_blank" rel="noopener noreferrer"
+        <a href="https://swap.pump.fun/?input=So11111111111111111111111111111111111111112&output=3ymMYoKuQj5JYESZs5Gp5rXScm1C3GarfzGZ22KHpump" target="_blank" rel="noopener noreferrer"
            class="btn-buy text-black font-bold text-xs sm:text-sm px-4 sm:px-5 py-2 sm:py-2.5 rounded-full uppercase tracking-wider shadow-[0_0_20px_rgba(0,200,5,0.4)] hover:shadow-[0_0_35px_rgba(0,200,5,0.6)]">
           Buy Now
         </a>
@@ -711,7 +797,7 @@
               <span class="text-[10px] uppercase tracking-wider text-robin-gold/80 font-bold px-2 py-0.5 rounded bg-robin-gold/10 border border-robin-gold/30">Solana</span>
             </div>
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <code id="caAddress" class="ca-box flex-1 text-sm sm:text-base text-robin-green bg-black/40 px-4 py-3 rounded-xl border border-robin-green/20">TBA</code>
+              <code id="caAddress" class="ca-box flex-1 text-sm sm:text-base text-robin-green bg-black/40 px-4 py-3 rounded-xl border border-robin-green/20">3ymMYoKuQj5JYESZs5Gp5rXScm1C3GarfzGZ22KHpump</code>
               <button id="copyCaBtn" type="button"
                       class="flex items-center justify-center gap-2 bg-robin-green/15 hover:bg-robin-green/25 border border-robin-green/40 text-robin-green font-bold px-5 py-3 rounded-xl transition-all active:scale-95 whitespace-nowrap">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
@@ -721,7 +807,7 @@
           </div>
 
           <div class="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
-            <a href="https://swap.pump.fun/?input=So11111111111111111111111111111111111111112&output=TBA" target="_blank" rel="noopener noreferrer"
+            <a href="https://swap.pump.fun/?input=So11111111111111111111111111111111111111112&output=3ymMYoKuQj5JYESZs5Gp5rXScm1C3GarfzGZ22KHpump" target="_blank" rel="noopener noreferrer"
                class="btn-buy w-full sm:w-auto text-center text-black font-black text-base sm:text-lg px-10 py-4 rounded-full uppercase tracking-wider shadow-[0_0_30px_rgba(0,200,5,0.45)]">
               ⚡ Charge In — Buy Now
             </a>
@@ -934,7 +1020,7 @@
       </div>
 
       <div class="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
-        <a href="https://swap.pump.fun/?input=So11111111111111111111111111111111111111112&output=TBA" target="_blank" rel="noopener noreferrer"
+        <a href="https://swap.pump.fun/?input=So11111111111111111111111111111111111111112&output=3ymMYoKuQj5JYESZs5Gp5rXScm1C3GarfzGZ22KHpump" target="_blank" rel="noopener noreferrer"
            class="btn-buy w-full sm:w-auto text-center text-black font-black text-base px-10 py-4 rounded-full uppercase tracking-wider">
           Buy on Pump.fun Swap
         </a>
@@ -965,7 +1051,7 @@
         <iframe
           id="dexFrame"
           class="dex-frame w-full rounded-2xl bg-black/60"
-          src="https://dexscreener.com/solana/TBA?embed=1&theme=dark&trades=0&info=0"
+          src="https://dexscreener.com/solana/3ymMYoKuQj5JYESZs5Gp5rXScm1C3GarfzGZ22KHpump?embed=1&theme=dark&trades=0&info=0"
           title="DexScreener $ROBINBULL Chart"
           loading="lazy"
           allow="clipboard-write"
@@ -973,7 +1059,7 @@
         ></iframe>
       </div>
       <p class="mt-4 text-center text-white/40 text-xs">
-        Chart fully awakens once the official pair / CA is carved into the forest. Replace TBA when live.
+        Chart fully awakens once the official pair / CA is carved into the forest. Replace 3ymMYoKuQj5JYESZs5Gp5rXScm1C3GarfzGZ22KHpump when live.
       </p>
     </div>
   </section>
@@ -1035,7 +1121,7 @@
         <p class="text-white/50 text-sm max-w-sm mx-auto mb-8 relative">
           The free forest is calling. Grab $ROBINBULL before the herd thunders past the treeline.
         </p>
-        <a href="https://swap.pump.fun/?input=So11111111111111111111111111111111111111112&output=TBA" target="_blank" rel="noopener noreferrer"
+        <a href="https://swap.pump.fun/?input=So11111111111111111111111111111111111111112&output=3ymMYoKuQj5JYESZs5Gp5rXScm1C3GarfzGZ22KHpump" target="_blank" rel="noopener noreferrer"
            class="btn-buy inline-block text-black font-black text-lg px-12 py-4 rounded-full uppercase tracking-wider relative shadow-[0_0_30px_rgba(0,200,5,0.4)]">
           Buy $ROBINBULL Now
         </a>
@@ -1075,7 +1161,7 @@
   </footer>
 
   <script>
-    const CONTRACT_ADDRESS = 'TBA';
+    const CONTRACT_ADDRESS = '3ymMYoKuQj5JYESZs5Gp5rXScm1C3GarfzGZ22KHpump';
 
     function showToast(msg) {
       const toast = document.getElementById('toast');
@@ -1170,6 +1256,72 @@
         nav.classList.remove('shadow-lg', 'shadow-black/50');
       }
     });
+
+    // Custom arrow cursor (arrow.svg)
+    (function customArrowCursor() {
+      if (window.matchMedia('(hover: none), (pointer: coarse)').matches) return;
+
+      const cursor = document.getElementById('custom-cursor');
+      const ring = document.getElementById('cursor-ring');
+      if (!cursor || !ring) return;
+
+      let mouseX = 0, mouseY = 0;
+      let ringX = 0, ringY = 0;
+      let visible = false;
+
+      document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        // Hotspot near arrow tip (top-left of graphic)
+        cursor.style.transform = `translate(${mouseX - 4}px, ${mouseY - 2}px)`;
+
+        if (!visible) {
+          visible = true;
+          cursor.classList.remove('hidden-cursor');
+        }
+      });
+
+      // Smooth lag ring
+      function animateRing() {
+        ringX += (mouseX - ringX) * 0.18;
+        ringY += (mouseY - ringY) * 0.18;
+        ring.style.transform = `translate(${ringX}px, ${ringY}px)`;
+        requestAnimationFrame(animateRing);
+      }
+      animateRing();
+
+      document.addEventListener('mousedown', () => cursor.classList.add('clicking'));
+      document.addEventListener('mouseup', () => cursor.classList.remove('clicking'));
+
+      document.addEventListener('mouseleave', () => {
+        cursor.classList.add('hidden-cursor');
+        ring.style.opacity = '0';
+        visible = false;
+      });
+      document.addEventListener('mouseenter', () => {
+        cursor.classList.remove('hidden-cursor');
+        ring.style.opacity = '1';
+      });
+
+      const hoverSelector = 'a, button, .btn-buy, .nav-link, .mobile-link, .social-card, .step-card, label, [role="button"], #copyCaBtn';
+      document.addEventListener('mouseover', (e) => {
+        if (e.target.closest(hoverSelector)) {
+          cursor.classList.add('hovering');
+          ring.classList.add('hovering');
+        }
+      });
+      document.addEventListener('mouseout', (e) => {
+        if (e.target.closest(hoverSelector)) {
+          cursor.classList.remove('hovering');
+          ring.classList.remove('hovering');
+        }
+      });
+
+      // Start hidden until first move
+      cursor.classList.add('hidden-cursor');
+      ring.style.opacity = '0';
+      document.addEventListener('mousemove', () => { ring.style.opacity = '1'; }, { once: true });
+    })();
   </script>
 </body>
 </html>

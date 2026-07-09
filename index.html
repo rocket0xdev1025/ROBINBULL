@@ -111,6 +111,43 @@
       box-shadow: 0 0 18px rgba(245, 197, 24, 0.3);
     }
 
+    /* Leaves that follow the mouse cursor */
+    #cursor-leaves {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 99997;
+      overflow: hidden;
+    }
+    .cursor-leaf {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 22px;
+      height: 22px;
+      margin: -11px 0 0 -11px;
+      pointer-events: none;
+      will-change: transform, opacity;
+      opacity: 0;
+      filter: drop-shadow(0 0 4px rgba(0, 200, 5, 0.45));
+      transition: opacity 0.25s ease;
+    }
+    .cursor-leaf.visible {
+      opacity: 0.9;
+    }
+    .cursor-leaf svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .cursor-leaf.l0 { width: 26px; height: 26px; margin: -13px 0 0 -13px; opacity: 0; }
+    .cursor-leaf.l0.visible { opacity: 1; }
+    .cursor-leaf.l1 { width: 20px; height: 20px; margin: -10px 0 0 -10px; }
+    .cursor-leaf.l2 { width: 18px; height: 18px; margin: -9px 0 0 -9px; }
+    .cursor-leaf.l3 { width: 16px; height: 16px; margin: -8px 0 0 -8px; }
+    .cursor-leaf.l4 { width: 14px; height: 14px; margin: -7px 0 0 -7px; }
+    .cursor-leaf.l5 { width: 12px; height: 12px; margin: -6px 0 0 -6px; }
+
     /* Fallback CSS cursor if JS fails / touch devices keep default via media query */
     @media (hover: none), (pointer: coarse) {
       body,
@@ -118,7 +155,7 @@
       .btn-buy, .nav-link, .mobile-link, .social-card, .step-card {
         cursor: auto !important;
       }
-      #custom-cursor, #cursor-ring { display: none !important; }
+      #custom-cursor, #cursor-ring, #cursor-leaves { display: none !important; }
     }
 
     /* ── Background ── */
@@ -694,6 +731,8 @@
     <img src="arrow.svg" alt="" draggable="false" />
   </div>
   <div id="cursor-ring" aria-hidden="true"></div>
+  <!-- Leaves that follow the cursor -->
+  <div id="cursor-leaves" aria-hidden="true"></div>
 
   <!-- Background video -->
   <div class="video-bg" aria-hidden="true">
@@ -1254,67 +1293,149 @@
       }
     });
 
-    // Custom arrow cursor (arrow.svg)
+    // Custom arrow cursor + leaves that follow the mouse
     (function customArrowCursor() {
       if (window.matchMedia('(hover: none), (pointer: coarse)').matches) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
       const cursor = document.getElementById('custom-cursor');
       const ring = document.getElementById('cursor-ring');
-      if (!cursor || !ring) return;
+      const leavesLayer = document.getElementById('cursor-leaves');
+      if (!cursor || !ring || !leavesLayer) return;
 
-      let mouseX = 0, mouseY = 0;
-      let ringX = 0, ringY = 0;
+      let mouseX = window.innerWidth / 2;
+      let mouseY = window.innerHeight / 2;
+      let ringX = mouseX, ringY = mouseY;
       let visible = false;
+
+      // Leaf SVG variants (forest greens + gold)
+      const leafColors = ['#00C805', '#39FF14', '#2d8a2d', '#F5C518', '#6bcf3a', '#c8e86a'];
+      const leafSVG = (color) =>
+        `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">` +
+        `<path d="M8 40 C8 18 20 6 40 6 C36 24 24 36 8 40Z" fill="${color}" opacity="0.92"/>` +
+        `<path d="M10 38 C18 30 28 18 38 10" stroke="#0a1f0a" stroke-width="1.4" opacity="0.55"/>` +
+        `<path d="M14 34 C20 28 28 20 34 14" stroke="#ffffff" stroke-width="0.8" opacity="0.25"/>` +
+        `</svg>`;
+
+      // 6 leaves trailing under the cursor tip (bottom of arrow)
+      const LEAF_COUNT = 6;
+      const leaves = [];
+      // Horizontal fan offsets under cursor (left / center / right alternating)
+      const fanX = [-10, 8, -16, 14, -6, 4];
+      for (let i = 0; i < LEAF_COUNT; i++) {
+        const el = document.createElement('div');
+        el.className = `cursor-leaf l${i}`;
+        el.innerHTML = leafSVG(leafColors[i % leafColors.length]);
+        leavesLayer.appendChild(el);
+        leaves.push({
+          el,
+          x: mouseX,
+          y: mouseY,
+          ease: 0.28 - i * 0.032,          // lower leaves lag more
+          // Base position: below cursor tip, each leaf further down
+          offsetX: fanX[i],
+          offsetY: 28 + i * 14,            // sit under the arrow
+          phase: (i / LEAF_COUNT) * Math.PI * 2,
+          spin: -25 + i * 12,
+          spinSpeed: 0.35 + i * 0.12,
+          side: i % 2 === 0 ? 1 : -1,
+        });
+      }
 
       document.addEventListener('mousemove', (e) => {
         mouseX = e.clientX;
         mouseY = e.clientY;
-        // Hotspot near arrow tip (top-left of graphic)
         cursor.style.transform = `translate(${mouseX - 4}px, ${mouseY - 2}px)`;
 
         if (!visible) {
           visible = true;
           cursor.classList.remove('hidden-cursor');
+          leaves.forEach((L) => L.el.classList.add('visible'));
         }
       });
 
-      // Smooth lag ring
-      function animateRing() {
+      let t = 0;
+      function animateFollowers() {
+        t += 0.016;
+
+        // Smooth lag ring
         ringX += (mouseX - ringX) * 0.18;
         ringY += (mouseY - ringY) * 0.18;
         ring.style.transform = `translate(${ringX}px, ${ringY}px)`;
-        requestAnimationFrame(animateRing);
-      }
-      animateRing();
 
-      document.addEventListener('mousedown', () => cursor.classList.add('clicking'));
+        // Leaves follow under the bottom of the cursor (arrow tip area)
+        leaves.forEach((L, i) => {
+          const sway = Math.sin(t * 1.6 + L.phase) * (3 + i * 1.2) * L.side;
+          const bob = Math.cos(t * 1.2 + L.phase) * 2;
+
+          // Always target BELOW the cursor tip
+          const targetX = mouseX + L.offsetX + sway;
+          const targetY = mouseY + L.offsetY + bob;
+
+          L.x += (targetX - L.x) * L.ease;
+          L.y += (targetY - L.y) * L.ease;
+          L.spin += L.spinSpeed;
+
+          const fade = 1 - i * 0.1;
+          L.el.style.opacity = visible ? String(Math.max(0.35, fade)) : '0';
+          L.el.style.transform =
+            `translate(${L.x}px, ${L.y}px) rotate(${L.spin + sway * 2}deg) scale(${1 - i * 0.05})`;
+        });
+
+        requestAnimationFrame(animateFollowers);
+      }
+      animateFollowers();
+
+      document.addEventListener('mousedown', () => {
+        cursor.classList.add('clicking');
+        // Nudge leaves further down on click
+        leaves.forEach((L, i) => {
+          L.y += 12 + i * 4;
+          L.x += L.side * (6 + i * 2);
+        });
+      });
       document.addEventListener('mouseup', () => cursor.classList.remove('clicking'));
 
       document.addEventListener('mouseleave', () => {
         cursor.classList.add('hidden-cursor');
         ring.style.opacity = '0';
+        leaves.forEach((L) => L.el.classList.remove('visible'));
         visible = false;
       });
       document.addEventListener('mouseenter', () => {
         cursor.classList.remove('hidden-cursor');
         ring.style.opacity = '1';
+        leaves.forEach((L) => L.el.classList.add('visible'));
       });
 
       const hoverSelector = 'a, button, .btn-buy, .nav-link, .mobile-link, .social-card, .step-card, label, [role="button"], #copyCaBtn';
+      // Store base vertical offsets so hover can stretch the trail under cursor
+      leaves.forEach((L) => {
+        L.baseOffsetX = L.offsetX;
+        L.baseOffsetY = L.offsetY;
+      });
+
       document.addEventListener('mouseover', (e) => {
         if (e.target.closest(hoverSelector)) {
           cursor.classList.add('hovering');
           ring.classList.add('hovering');
+          leaves.forEach((L, i) => {
+            L.offsetY = L.baseOffsetY + 8 + i * 3; // hang a bit lower on hover
+            L.offsetX = L.baseOffsetX * 1.2;
+          });
         }
       });
       document.addEventListener('mouseout', (e) => {
         if (e.target.closest(hoverSelector)) {
           cursor.classList.remove('hovering');
           ring.classList.remove('hovering');
+          leaves.forEach((L) => {
+            L.offsetY = L.baseOffsetY;
+            L.offsetX = L.baseOffsetX;
+          });
         }
       });
 
-      // Start hidden until first move
       cursor.classList.add('hidden-cursor');
       ring.style.opacity = '0';
       document.addEventListener('mousemove', () => { ring.style.opacity = '1'; }, { once: true });
